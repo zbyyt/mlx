@@ -1,0 +1,75 @@
+#!/bin/sh
+#==================================
+# Author: Iarom Madden
+# EMAIL/NEWSLETTER/LINK_SHARE AUTOMATION
+# 	- Email scripting for batch mails and link sending from mutt
+# 	- Distributing communications for data files and newsletters
+# TODO: CLEANUP;Future: Integrate code into previous
+# ===================================
+
+
+# NEWSLETTER/GROUP EMAIL SCRIPT
+ml_nws () {
+	subj="$1"
+	body="$2"
+	addr_f="$3"
+	
+	addr_ls=`awk -F ', ' '{print $1" "$2}' < $addr_f`
+	
+	while IFS= read -r addr; do
+	    echo "$addr"
+	    neomutt -s "$subj" "$addr" < $body
+	done <<EOF
+	$addr_ls
+	
+EOF
+
+	# update to extract subject from the "body" file??
+	# watch out for playing with the $IFS. 
+	#..I used in and it made it into one line, 
+	#..so the email test included multiple emails in one address bar, 
+	#... sharing everyones email information with everyone else...
+	#
+}
+
+##===============================
+# NEWSLETTER ONEMAIL??
+ml_nws_one () {
+	subj="$1"
+	body="$2"
+	addr_f="$3"
+	
+	addr_ls=`awk -F ', ' '{print $1" "$2}' < $addr_f`
+	#neomutt -s "$subj" -i "$body" -- "$addr_ls"
+	neomutt -s "$subj" -- "$addr_ls" < $body
+	
+	#The above is for putting recipients all on the "to" field - use the other script for privacy where no one can see each others email..
+}
+
+##=================================
+# SHARE LINKS VIA EMAIL HANDLE/FUNCTION
+# TODO:
+ml_lnk () {
+	name=""
+	mutt -s "Videos" x
+	
+	# make a script that takes a full name as input, 
+	#.. then fetches the directory of that name with videos in it
+	#.. generates a link with rclone
+	#.. makes an email to the person with the link in it
+	
+	# then make another script that takes a list of names,
+	#.. feeds it into the above script
+}
+
+##==================================
+# cases
+cmd="${1}" && shift 1
+
+case $cmd in 
+	nws) ml_nws ;;
+	nws1) ml_nws_one ;;
+	lnk) ml_lnk ;;
+esac
+
+

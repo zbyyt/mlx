@@ -1,0 +1,143 @@
+#!/bin/sh
+cmd=$1 && shift 1
+
+case $cmd in
+	kill)
+		kill=$(notmuch search \
+			--output=files \
+			--format=text \
+			tag:kill )
+			
+		for k in $kill; do
+			[ -e "$k" ] then
+			rm $k
+		done
+		notmuch new
+			
+		## doc ==============
+		#last command to update the database 
+		#..after emails are deleted by the first command
+	# Kill all messages with killed tag..
+	;;
+
+	tag)
+		## tagging based of maildir path =============
+		notmuch tag +ii +aa 	-- path:"iao0/ii/**"
+		notmuch tag +ii +aa 	-- path:"iao0/ii.aa/**"
+		notmuch tag +ii +aa 	-- path:"iao0/ii.g0/**"
+		#==========
+		notmuch tag +ii +sc 	-- path:"iao0/ii.gs0/**"
+		notmuch tag +ii +sc 	-- path:"iao0/ii.sc/**"
+		notmuch tag +ii +sc 	-- path:"iao0/ii.zaoiadm/**"
+		notmuch tag +ii +sc 	-- path:"iao0/ii.sc/**"
+		#===========
+		notmuch tag +nws -ii 	-- path:"iao0/zii.news/**"
+		notmuch tag +kill 	-- path:"iao0/zzbin/**"
+		notmuch tag +sp 	-- path:"iao0/zzspam/**"
+		notmuch tag +sp         -- path:"iao0/ii.zsp/**"
+		#=================
+		notmuch tag -ii +ar +ar.iao	 	-- path:"iao0/ar/**"
+		notmuch tag -ii +ar +ar.aa +ar.iao 	-- path:"iao0/ar.aa/**"
+		notmuch tag -ii +ar +ar.sc +ar.iao 	-- path:"iao0/ar.sc/**"
+		# others ======
+		notmuch tag -ii +ar +ar.g0 	-- path:"pop/g0/ar/**"
+		notmuch tag -ii +ar +ar.gs0 	-- path:"pop/gs0/ar/**"
+		## tagging based on tags ====================
+		notmuch tag -ii 			-- tag:nws or tag:ar or \
+							   tag:tt or tag:spc or tag:sp
+		## tagging based on metadata ================
+		notmuch tag -new -ii +sent 		-- from:iao@mailbox.org or iarom.madden@gmail.com
+		notmuch tag +nws -new -ii 		-- from:newsletter@** or subject:'newsletter*'
+		## finish ===========================
+		#mlnm.mv
+		notmuch new
+		# tdo.for moving based on tags - refer to other script
+		# tdo.tag newsletters, but dont show them in inbox
+		;;
+
+
+	mv) # MOVING ==========================================================
+		## dont use this function - it could be messing up my mails metadata
+		MAILDIR=/home/iao/.local/mail/iao0/
+		function safeMove { s=${1##*/}; s=${s%%,*}; mv -f $1 $2/$s; }
+		#============================================
+		# mv. actionable ======================
+		echo Moving $(notmuch count --output=files \
+				--exclude=false \
+				tag:sc AND tag:tt) \
+		     	actionable msgs to the ii.ttsc folder
+		for i in $(notmuch search \
+				--exclude=false \
+				--output=files \
+				tag:sc AND tag:tt); do
+		    	safeMove $i ${MAILDIR}/ii.ttsc/cur
+		done
+		echo Moving $(notmuch count --output=files \
+				--exclude=false \
+				tag:aa AND tag:tt) \
+		     	actionable msgs to the ii.ttaa folder
+		for i in $(notmuch search \
+				--exclude=false \
+				--output=files \
+				tag:aa AND tag:tt); do
+		    	safeMove $i ${MAILDIR}/ii.ttaa/cur
+		done
+		#==========================================
+		# mv. inbox unity ===============
+		echo Moving $(notmuch count --output=files \
+				--exclude=false \
+				tag:sc AND tag:ii) \
+		     	sec inbox messages to the ii.sc folder
+		for i in $(notmuch search \
+				--exclude=false \
+				--output=files \
+				tag:sc AND tag:ii); do
+		    	safeMove $i ${MAILDIR}/ii.sc/cur
+		done
+		echo Moving $(notmuch count --output=files \
+				--exclude=false \
+				tag:aa AND tag:ii) \
+		     	important inbox msgs to the ii.aa folder
+		for i in $(notmuch search \
+				--exclude=false \
+				--output=files \
+				tag:aa AND tag:ii); do
+		    	safeMove $i ${MAILDIR}/ii.aa/cur
+		done
+		echo Syncing with imap server
+		mbsync --all
+		echo Updating notmuch database
+		notmuch new --no-hooks
+			
+		exit
+		# =======================================
+		# =======================================
+		# OTHEr
+		##===========================================
+		# mv. to filtered ==================
+		echo Moving $(notmuch count --output=files \
+				--exclude=false \
+				tag:sp AND tag:ii) \
+		     	actionable msgs to the ii.ttsc folder
+		for i in $(notmuch search \
+				--exclude=false \
+				--output=files \
+				tag:sc AND tag:tt); do
+		    	safeMove $i ${MAILDIR}/ii.ttsc/cur
+		done
+		echo Moving $(notmuch count --output=files \
+				--exclude=false \
+				tag:aa AND tag:tt) \
+		     	actionable msgs to the ii.ttaa folder
+		for i in $(notmuch search \
+				--exclude=false \
+				--output=files \
+				tag:aa AND tag:tt); do
+		    	safeMove $i ${MAILDIR}/ii.ttaa/cur
+		done
+		##===========================================
+		# mv. to archive ==================
+		#tdo
+			
+		;;		
+esac	

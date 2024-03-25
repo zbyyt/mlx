@@ -1,0 +1,15 @@
+#!/bin/sh
+# DESCRIPTION: 
+# 	- View emails as multipl
+#TODO
+###################################
+
+# Copy the HTML content to a specific location
+cp "$1" /tmp/current_email.html &
+#cat "$1" > ~/.cache/mutt/mail.html
+
+qutebrowser ':reload' &
+
+cat $1 | w3m -I %{charset} -T text/html -o display_charset=%{charset} -o auto_image=TRUE
+
+# Use qutebrowser's IPC interface to open the HTML file

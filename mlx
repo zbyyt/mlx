@@ -1,0 +1,136 @@
+#!/bin/env bash
+
+# =====================================
+# AUTHOR: IAROM MADDEN
+#
+# ==================================
+
+# init
+cmd=$1 && shift 1
+mailf="$HOME/.cache/mutt/mail.html"
+mailf_md="$HOME/.cache/mutt/mail.md"
+browser_win="qb m"
+browser_winf="$BROWSER_WINF"
+#browser_win="$BROWSER_WIN"
+
+
+# remote sync ####################################
+
+_remote_sync_init() {
+  cfg_notmuch="/home/$USER/.config/notmuch/notmuchrc"
+  cfg_mbsync="/home/$USER/.config/isync/mbsyncrc"
+  STATE="$(nmcli networking connectivity)"
+}
+
+_remote_sync_cmd() {
+  mbsync -c "$cfg_mbsync" --all
+  notmuch --config="$cfg_notmuch" new ##--quiet >> /dev/null
+}
+
+_remote_sync_run() { 
+  if [ $STATE = 'full' ]; then _remote_sync_cmd; exit 0; else echo "No internet connection."; exit 0; fi }
+
+_remote_sync() {
+  _remote_sync_init
+  _remote_sync_run ;}
+
+
+# OTHER ##########################################
+
+_rmd() { # WHAT WAS THIS INTENDED FOR?
+		rmd="$1"
+		dts="$2"
+		rmd="$(printf "rmd: %s" "$rmd")"
+		ml="m@iarom.org"
+		printf "Details: \n%s\n" "$dts" |\
+			neomutt -s "$rmd" "$ml"
+		#rmdt ====================
+		rmd=		"$1"
+		deets=	"$2"
+		#atq
+		mlrmd "$rmd" "$deets" ;}
+
+
+md2html() {
+		sleep 2s
+		# EMAIL AUTHORING
+		# - MARKDOWN TO HTML
+			#pandoc -s -f gfm -t html5 -o /tmp/msg.html<enter>\
+				#a^U/tmp/msg.txt\n ^Da^U/tmp/msg.html\n^D^T^Utext/html; charset=utf-8\n=DTT&d^U\n"
+			
+			# doesnt attach the email yet
+			# lookat at mubindz for some exp code
+			# the above method creates a nicer html format
+			# problem: doesnt nest comments when replying with two replies into history
+}
+
+# render html as markdown and display in glow, supports syntax highlighting
+# requires: html2text, glow
+
+beauty() {
+  file_in="$HOME/.cache/mutt/mail.html"
+  file_out="$HOME/.cache/mutt/mail.md"
+  perl -0777pe \
+  	's/(<code class="sourceCode\s?)(\w+?)(">)(.*?)(<\/code>)/\1\2\3\n```\2\n\4\n```\n\5/gs' "$file_in" \
+  	| html2text \
+  	| sed -re 's/^\s+(```(\w+)?)/\1/gm' > $file_out
+
+  #glow -s ~/.config/glow/email.json $file | sed 's/\x1b\[[6-9;]*m//g'
+
+  # s/^\s+(```(\w+)?)/\1/gm' > $file_out
+  #glow -s ~/.config/glow/email.json $file | sed 's/\x1b\[[6-9;]*m//g'
+}
+
+
+# browsing #############################################
+
+
+_term_view() {
+beautiful_html_render $mailf > $mailf
+		less $mailf
+		#links "www.google.com/search?q=define+svd" -dump | nvim -
+		#st -e 'glow ~/.cache/mutt/mail.html'
+		#pandoc -f html -t markdown -s -R \
+			#--lua-filter=$HOME/.local/bin/ml/remove-links.lua "$mailf" -o "$mailf_md"
+		#glow $mailf_md
+		#beautiful_html_render $mailf
+		#bat $mailf | lesspipe.sh
+		#lesspipe.sh $mailf
+		#glow $mailf
+}
+
+#_term_b() { lynx $mailf; }
+#_term_b() { w3m -o auto_image=TRUE $mailf; }
+
+_term_b()  { elinks $mailf & }
+_b()       { $browser_win "$mailf" & sleep 0.5s; }
+_b_float() { $browser_winf "file://$mailf" ; }
+
+#_b()       { $browser_win $mailf & sleep 0.5s; i3-msg "fullscreen"; }
+# TODO: make a version which reloads a floating window and grabs it's attention
+# - TMUX version?
+
+
+## CASES ######################################
+
+case $cmd in
+	browser)    _b ;;
+	qb.float)   _b_float ;;
+	term)       _term_b ;;
+	term_view)  _term_view ;;# MD VIEWER VARIATIONS
+	md2html)     ;; #?
+  sync)       _remote_sync ;;
+esac
+
+
+# TODOS #############################################
+
+# TODO: ws
+# - Make a floating version
+# - Make it so it's a nested tab within the other windows in the space
+# - Generalise the splitting of windows
+# - simply feed the specific terminal commands that should be feeded to each 
+
+# xTODO: Keep this one minimal. Make 2nd function that includes 2 nmutt and a qb browser with socials open..
+# xTODO: Make i3-msg sequences into individual functions
+# xTODO:	Add other browser win functions
