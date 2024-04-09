@@ -84,7 +84,6 @@ beauty() {
 
 # browsing #############################################
 
-
 _term_view() {
 beautiful_html_render $mailf > $mailf
 		less $mailf
@@ -122,15 +121,12 @@ case $cmd in
   sync)       _remote_sync ;;
 esac
 
-
 # TODOS #############################################
-
 # TODO: ws
 # - Make a floating version
 # - Make it so it's a nested tab within the other windows in the space
 # - Generalise the splitting of windows
 # - simply feed the specific terminal commands that should be feeded to each 
-
 # xTODO: Keep this one minimal. Make 2nd function that includes 2 nmutt and a qb browser with socials open..
 # xTODO: Make i3-msg sequences into individual functions
 # xTODO:	Add other browser win functions
