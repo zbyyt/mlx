@@ -17,20 +17,25 @@ browser_winf="$BROWSER_WINF"
 # remote sync ####################################
 
 _remote_sync_init() {
+
   cfg_notmuch="/home/$USER/.config/notmuch/notmuchrc"
   cfg_mbsync="/home/$USER/.config/isync/mbsyncrc"
-  STATE="$(nmcli networking connectivity)"
-}
+  STATE="$(nmcli networking connectivity)"; }
+
 
 _remote_sync_cmd() {
+
   mbsync -c "$cfg_mbsync" --all
-  notmuch --config="$cfg_notmuch" new ##--quiet >> /dev/null
-}
+  notmuch --config="$cfg_notmuch" new  ;} ##--quiet >> /dev/null
+
 
 _remote_sync_run() { 
+  
   if [ $STATE = 'full' ]; then _remote_sync_cmd; exit 0; else echo "No internet connection."; exit 0; fi }
 
+
 _remote_sync() {
+
   _remote_sync_init
   _remote_sync_run ;}
 
@@ -41,7 +46,7 @@ _rmd() { # WHAT WAS THIS INTENDED FOR?
 		rmd="$1"
 		dts="$2"
 		rmd="$(printf "rmd: %s" "$rmd")"
-		ml="m@iarom.org"
+		#ml="m@iarom.org"
 		printf "Details: \n%s\n" "$dts" |\
 			neomutt -s "$rmd" "$ml"
 		#rmdt ====================
