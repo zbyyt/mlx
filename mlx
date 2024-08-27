@@ -6,18 +6,28 @@
 
 # init
 
-cmd=$1 && shift 1
-mlx_rut="$HOME/.cache/mutt"
-mlx_rip="$HOME/.cache/mutt/rip"
-mlx_md="$mlx_rut/mlx.md"
-mlx_mime="$mlx_rut/mlx.mime"
-mlx_htmx="$mlx_rip/mlx.html"
-mlx_htmr="$mlx_rip/text-html2"
-browser_win="qb m"
-browser_winf="$BROWSER_WINF"
-#browser_win="$BROWSER_WIN"
-#mlx_htmr="$mlx_rip/textfile2"
-#mlx_htmy="$mlx_rip/mlx.html"
+
+
+_ini() {
+
+    declare -rg cmd=$1 && shift 1
+
+    declare -rg mlx_dir_ru="/run/user/$UID/mutt"
+    declare -rg mlx_dir_ri="$mlx_dir_ru/rip"
+    declare -rg mlx_fil_md="$mlx_dir_ru/mlx.md"
+    declare -rg mlx_fil_mi="$mlx_dir_ru/mlx.mime"
+    declare -rg mlx_fil_hlx="$mlx_dir_ri/mlx.html"
+    declare -rg mlx_fil_hlr="$mlx_dir_ri/text-html2"
+    declare -rg browser_win="qb m"
+    declare -rg browser_winf="$BROWSER_WINF"
+
+    mkdir -p "${mlx_dir_ru}" "${mlx_dir_ri}" ;}
+    #browser_win="$BROWSER_WIN"
+    #mlx_fil_hlr="$mlx_dir_ri/textfile2"
+    #mlx_htmy="$mlx_dir_ri/mlx.html"
+
+
+_prn_uid() { printf "%s\n" "$UID"; }
 
 
 # remote sync ####################################
@@ -44,20 +54,20 @@ _remote_sync() {
 
 # browsing #############################################
 
-_term_b()  { elinks "${mlx_htmx}" & }
+_term_b()  { elinks "${mlx_fil_hlx}" & }
 _b_float() { $browser_winf "file://$mailf" ; }
-_bry()     { $browser_win "${mlx_htmx}" & sleep 0.5s; }
-_brx()     { $browser_win "${mlx_htmx}" & }
-#_brx()     { $browser_win "${mlx_htmr}" & sleep 0.5s; }
+_bry()     { $browser_win "${mlx_fil_hlx}" & sleep 0.5s; }
+_brx()     { $browser_win "${mlx_fil_hlx}" & }
+#_brx()     { $browser_win "${mlx_fil_hlr}" & sleep 0.5s; }
 
 
 # piping ###############################################
 
 _pip_brx() {
 
-    #mv ${mlx_rip}/* "${mlx_rip}/ztodelete/"
-    ripmime --name-by-type --overwrite -d "${mlx_rip}" -i -
-    mv "${mlx_htmr}" "${mlx_htmx}" > /dev/null 2>&1 &
+    #mv ${mlx_dir_ri}/* "${mlx_dir_ri}/ztodelete/"
+    ripmime --name-by-type --overwrite -d "${mlx_dir_ri}" -i -
+    mv "${mlx_fil_hlr}" "${mlx_fil_hlx}" > /dev/null 2>&1 &
     _brx > /dev/null 2>&1 &
 }
 
@@ -78,8 +88,8 @@ _listen() {
     while read -r x ; do
 
         timeout 0.1 cat "${FIFO_X}" # interupt que
-        ripmime --name-by-type --overwrite -d "${mlx_rip}" -i "${mlx_mime}"
-        mv "${mlx_htmr}" "${mlx_htmx}" > /dev/null 2>&1 &
+        ripmime --name-by-type --overwrite -d "${mlx_dir_ri}" -i "${mlx_fil_mi}"
+        mv "${mlx_fil_hlr}" "${mlx_fil_hlx}" > /dev/null 2>&1 &
         _brx > /dev/null 2>&1 &
         sleep 0.3
 
@@ -90,103 +100,25 @@ _listen() {
 
 ## CASES ######################################
 
-case $cmd in
-    sync)       _remote_sync ;;
-    # view
-    qb.rip)     _listen ;;
-    qb.rip.y)   _pip_brx  ${@} ;;
-	browser)    _b ;;
-	qb.float)   _b_float ;;
-	term)       _term_b ;;
-	term_view)  _term_view ;;# MD VIEWER VARIATIONS
-    # convert
-	md2html)     ;; #?
-esac
+_main() {
 
+    _ini ${@}
 
-exit
-# TODOS #############################################
-# TODO: ws
-# - Make a floating version
-# - Make it so it's a nested tab within the other windows in the space
-# - Generalise the splitting of windows
-# - simply feed the specific terminal commands that should be feeded to each 
-# xTODO: Keep this one minimal. Make 2nd function that includes 2 nmutt and 
-#        a qb browser with socials open..
-# xTODO: Make i3-msg sequences into individual functions
-# xTODO:	Add other browser win functions
-
-
-# exp #################################################
-# TODO: isolate into other file
-
-_term_view() {
-
-    beautiful_html_render $mailf > $mailf
-		less $mailf
-		#links "www.google.com/search?q=define+svd" -dump | nvim -
-		#st -e 'glow ~/.cache/mutt/mail.html'
-		#pandoc -f html -t markdown -s -R \
-		    #--lua-filter=$HOME/.local/bin/ml/remove-links.lua \
-            #"$mailf" -o "$mailf_md"
-		#glow $mailf_md
-		#beautiful_html_render $mailf
-		#bat $mailf | lesspipe.sh
-		#lesspipe.sh $mailf
-		#glow $mailf
+    case $cmd in # todo: standardise names
+        sync)       _remote_sync ;;
+        uid)        _prn_uid ;;
+        # view
+        qb.rip)     _listen ;;
+        qb.rip.y)   _pip_brx  ${@} ;;
+    	browser)    _b ;;
+    	qb.float)   _b_float ;;
+    	term)       _term_b ;;
+    	term_view)  _term_view ;;# MD VIEWER VARIATIONS
+        # convert
+    	md2html)     ;; #?
+    esac
 }
 
-#_term_b() { lynx $mailf; }
-#_term_b() { w3m -o auto_image=TRUE $mailf; }
 
-#_b()       { $browser_win $mailf & sleep 0.5s; i3-msg "fullscreen"; }
-# TODO: make a version which reloads a floating window and grabs it's attention
-# - TMUX version?
-
-# other ##########################################
-
-_rmd() { # WHAT WAS THIS INTENDED FOR?
-
-	rmd="$1"
-	dts="$2"
-	rmd="$(printf "rmd: %s" "$rmd")"
-	#ml="m@iarom.org"
-	printf "Details: \n%s\n" "$dts" |\
-		neomutt -s "$rmd" "$ml"
-	#rmdt ====================
-	rmd=		"$1"
-	deets=	"$2"
-	#atq
-	mlrmd "$rmd" "$deets" ;}
-
-
-md2html() {
-		sleep 2s
-		# EMAIL AUTHORING
-		# - MARKDOWN TO HTML
-			#pandoc -s -f gfm -t html5 -o /tmp/msg.html<enter>\
-				#a^U/tmp/msg.txt\n ^Da^U/tmp/msg.html\n^D^T^Utext/html; charset=utf-8\n=DTT&d^U\n"
-			
-			# doesnt attach the email yet
-			# lookat at mubindz for some exp code
-			# the above method creates a nicer html format
-			# problem: doesnt nest comments when replying with two replies into history
-}
-
-# render html as markdown and display in glow, supports syntax highlighting
-# requires: html2text, glow
-
-beauty() {
-  file_in="$HOME/.cache/mutt/mail.html"
-  file_out="$HOME/.cache/mutt/mail.md"
-  perl -0777pe \
-  	's/(<code class="sourceCode\s?)(\w+?)(">)(.*?)(<\/code>)/\1\2\3\n```\2\n\4\n```\n\5/gs' "$file_in" \
-  	| html2text \
-  	| sed -re 's/^\s+(```(\w+)?)/\1/gm' > $file_out
-
-  #glow -s ~/.config/glow/email.json $file | sed 's/\x1b\[[6-9;]*m//g'
-
-  # s/^\s+(```(\w+)?)/\1/gm' > $file_out
-  #glow -s ~/.config/glow/email.json $file | sed 's/\x1b\[[6-9;]*m//g'
-}
+_main "${@}"
 
