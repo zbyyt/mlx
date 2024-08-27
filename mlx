@@ -1,59 +1,163 @@
 #!/bin/env bash
 
-# =====================================
+###########################################
 # AUTHOR: IAROM MADDEN
-#
-# ==================================
+###########################################
 
 # init
+
 cmd=$1 && shift 1
-mailf="$HOME/.cache/mutt/mail.html"
-mailf_md="$HOME/.cache/mutt/mail.md"
+mlx_rut="$HOME/.cache/mutt"
+mlx_rip="$HOME/.cache/mutt/rip"
+mlx_md="$mlx_rut/mlx.md"
+mlx_mime="$mlx_rut/mlx.mime"
+mlx_htmx="$mlx_rip/mlx.html"
+mlx_htmr="$mlx_rip/text-html2"
 browser_win="qb m"
 browser_winf="$BROWSER_WINF"
 #browser_win="$BROWSER_WIN"
+#mlx_htmr="$mlx_rip/textfile2"
+#mlx_htmy="$mlx_rip/mlx.html"
 
 
 # remote sync ####################################
 
-_remote_sync_init() {
+_remote_sync_ini1() {
 
-  cfg_notmuch="/home/$USER/.config/notmuch/notmuchrc"
-  cfg_mbsync="/home/$USER/.config/isync/mbsyncrc"
-  STATE="$(nmcli networking connectivity)"; }
-
-
-_remote_sync_cmd() {
-
-  mbsync -c "$cfg_mbsync" --all
-  notmuch --config="$cfg_notmuch" new  ;} ##--quiet >> /dev/null
+  declare -r cfg_notmuch="/home/$USER/.config/notmuch/notmuchrc"
+  declare -r cfg_mbsync="/home/$USER/.config/isync/mbsyncrc"; }
 
 
 _remote_sync_run() { 
-  
-  if [ $STATE = 'full' ]; then _remote_sync_cmd; exit 0; else echo "No internet connection."; exit 0; fi }
+    
+    STATE="$(nmcli networking connectivity)"
+    [ $STATE = 'full' ] || { echo "No internet connection."; exit 1; }
+    mbsync -c "$cfg_mbsync" --all
+    notmuch --config="$cfg_notmuch" new  ;} ##--quiet >> /dev/null
 
 
 _remote_sync() {
 
-  _remote_sync_init
+  _remote_sync_ini1
   _remote_sync_run ;}
 
 
-# OTHER ##########################################
+# browsing #############################################
+
+_term_b()  { elinks "${mlx_htmx}" & }
+_b_float() { $browser_winf "file://$mailf" ; }
+_bry()     { $browser_win "${mlx_htmx}" & sleep 0.5s; }
+_brx()     { $browser_win "${mlx_htmx}" & }
+#_brx()     { $browser_win "${mlx_htmr}" & sleep 0.5s; }
+
+
+# piping ###############################################
+
+_pip_brx() {
+
+    #mv ${mlx_rip}/* "${mlx_rip}/ztodelete/"
+    ripmime --name-by-type --overwrite -d "${mlx_rip}" -i -
+    mv "${mlx_htmr}" "${mlx_htmx}" > /dev/null 2>&1 &
+    _brx > /dev/null 2>&1 &
+}
+
+
+_clean() { rm -f "$FIFO_X"; exit 0;}
+
+
+_listen() {
+    
+    trap _clean SIGINT SIGTERM
+
+    rm -f "${FIFO_X:="/tmp/mutt-fifo"}"
+    mkfifo "${FIFO_X:="/tmp/mutt-fifo"}" >/dev/null 2>&1
+    mkfifo "${FIFO_GUARD:="/tmp/mutt-fifo-guard"}" >/dev/null 2>&1
+
+    >"${FIFO_X}" <"${FIFO_GUARD}" & # guard: prevents eof closes on reader
+
+    while read -r x ; do
+
+        timeout 0.1 cat "${FIFO_X}" # interupt que
+        ripmime --name-by-type --overwrite -d "${mlx_rip}" -i "${mlx_mime}"
+        mv "${mlx_htmr}" "${mlx_htmx}" > /dev/null 2>&1 &
+        _brx > /dev/null 2>&1 &
+        sleep 0.3
+
+    done < "${FIFO_X}"
+    
+    _clean;}
+
+
+## CASES ######################################
+
+case $cmd in
+    sync)       _remote_sync ;;
+    # view
+    qb.rip)     _listen ;;
+    qb.rip.y)   _pip_brx  ${@} ;;
+	browser)    _b ;;
+	qb.float)   _b_float ;;
+	term)       _term_b ;;
+	term_view)  _term_view ;;# MD VIEWER VARIATIONS
+    # convert
+	md2html)     ;; #?
+esac
+
+
+exit
+# TODOS #############################################
+# TODO: ws
+# - Make a floating version
+# - Make it so it's a nested tab within the other windows in the space
+# - Generalise the splitting of windows
+# - simply feed the specific terminal commands that should be feeded to each 
+# xTODO: Keep this one minimal. Make 2nd function that includes 2 nmutt and 
+#        a qb browser with socials open..
+# xTODO: Make i3-msg sequences into individual functions
+# xTODO:	Add other browser win functions
+
+
+# exp #################################################
+# TODO: isolate into other file
+
+_term_view() {
+
+    beautiful_html_render $mailf > $mailf
+		less $mailf
+		#links "www.google.com/search?q=define+svd" -dump | nvim -
+		#st -e 'glow ~/.cache/mutt/mail.html'
+		#pandoc -f html -t markdown -s -R \
+		    #--lua-filter=$HOME/.local/bin/ml/remove-links.lua \
+            #"$mailf" -o "$mailf_md"
+		#glow $mailf_md
+		#beautiful_html_render $mailf
+		#bat $mailf | lesspipe.sh
+		#lesspipe.sh $mailf
+		#glow $mailf
+}
+
+#_term_b() { lynx $mailf; }
+#_term_b() { w3m -o auto_image=TRUE $mailf; }
+
+#_b()       { $browser_win $mailf & sleep 0.5s; i3-msg "fullscreen"; }
+# TODO: make a version which reloads a floating window and grabs it's attention
+# - TMUX version?
+
+# other ##########################################
 
 _rmd() { # WHAT WAS THIS INTENDED FOR?
-		rmd="$1"
-		dts="$2"
-		rmd="$(printf "rmd: %s" "$rmd")"
-		#ml="m@iarom.org"
-		printf "Details: \n%s\n" "$dts" |\
-			neomutt -s "$rmd" "$ml"
-		#rmdt ====================
-		rmd=		"$1"
-		deets=	"$2"
-		#atq
-		mlrmd "$rmd" "$deets" ;}
+
+	rmd="$1"
+	dts="$2"
+	rmd="$(printf "rmd: %s" "$rmd")"
+	#ml="m@iarom.org"
+	printf "Details: \n%s\n" "$dts" |\
+		neomutt -s "$rmd" "$ml"
+	#rmdt ====================
+	rmd=		"$1"
+	deets=	"$2"
+	#atq
+	mlrmd "$rmd" "$deets" ;}
 
 
 md2html() {
@@ -86,52 +190,3 @@ beauty() {
   #glow -s ~/.config/glow/email.json $file | sed 's/\x1b\[[6-9;]*m//g'
 }
 
-
-# browsing #############################################
-
-_term_view() {
-beautiful_html_render $mailf > $mailf
-		less $mailf
-		#links "www.google.com/search?q=define+svd" -dump | nvim -
-		#st -e 'glow ~/.cache/mutt/mail.html'
-		#pandoc -f html -t markdown -s -R \
-			#--lua-filter=$HOME/.local/bin/ml/remove-links.lua "$mailf" -o "$mailf_md"
-		#glow $mailf_md
-		#beautiful_html_render $mailf
-		#bat $mailf | lesspipe.sh
-		#lesspipe.sh $mailf
-		#glow $mailf
-}
-
-#_term_b() { lynx $mailf; }
-#_term_b() { w3m -o auto_image=TRUE $mailf; }
-
-_term_b()  { elinks $mailf & }
-_b()       { $browser_win "$mailf" & sleep 0.5s; }
-_b_float() { $browser_winf "file://$mailf" ; }
-
-#_b()       { $browser_win $mailf & sleep 0.5s; i3-msg "fullscreen"; }
-# TODO: make a version which reloads a floating window and grabs it's attention
-# - TMUX version?
-
-
-## CASES ######################################
-
-case $cmd in
-	browser)    _b ;;
-	qb.float)   _b_float ;;
-	term)       _term_b ;;
-	term_view)  _term_view ;;# MD VIEWER VARIATIONS
-	md2html)     ;; #?
-  sync)       _remote_sync ;;
-esac
-
-# TODOS #############################################
-# TODO: ws
-# - Make a floating version
-# - Make it so it's a nested tab within the other windows in the space
-# - Generalise the splitting of windows
-# - simply feed the specific terminal commands that should be feeded to each 
-# xTODO: Keep this one minimal. Make 2nd function that includes 2 nmutt and a qb browser with socials open..
-# xTODO: Make i3-msg sequences into individual functions
-# xTODO:	Add other browser win functions
