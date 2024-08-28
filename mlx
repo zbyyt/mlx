@@ -16,8 +16,10 @@ _ini() {
     declare -rg mlx_dir_ri="$mlx_dir_ru/rip"
     declare -rg mlx_fil_md="$mlx_dir_ru/mlx.md"
     declare -rg mlx_fil_mi="$mlx_dir_ru/mlx.mime"
-    declare -rg mlx_fil_hlx="$mlx_dir_ri/mlx.html"
+    declare -rg mlx_fil_hlx="$mlx_dir_ru/mlx.html"
     declare -rg mlx_fil_hlr="$mlx_dir_ri/text-html2"
+    declare -rg mlx_fil_hlr1="$mlx_dir_ri/text-html1"
+    declare -rg mlx_fil_txt1="$mlx_dir_ri/text-plain0"
     declare -rg browser_win="qb m"
     declare -rg browser_winf="$BROWSER_WINF"
 
@@ -56,9 +58,7 @@ _remote_sync() {
 
 _term_b()  { elinks "${mlx_fil_hlx}" & }
 _b_float() { $browser_winf "file://$mailf" ; }
-_bry()     { $browser_win "${mlx_fil_hlx}" & sleep 0.5s; }
 _brx()     { $browser_win "${mlx_fil_hlx}" & }
-#_brx()     { $browser_win "${mlx_fil_hlr}" & sleep 0.5s; }
 
 
 # piping ###############################################
@@ -71,6 +71,7 @@ _pip_brx() {
     _brx > /dev/null 2>&1 &
 }
 
+_txt2html() { pandoc --quiet -s -f markdown -t html5 -o ${mlx_fil_hlx} ${mlx_fil_txt1}; }
 
 _clean() { rm -f "$FIFO_X"; exit 0;}
 
@@ -83,14 +84,32 @@ _listen() {
     mkfifo "${FIFO_X:="/tmp/mutt-fifo"}" >/dev/null 2>&1
     mkfifo "${FIFO_GUARD:="/tmp/mutt-fifo-guard"}" >/dev/null 2>&1
 
+    #mkfifo "${fifo_log:="/tmp/fifo-log"}"
+    
     >"${FIFO_X}" <"${FIFO_GUARD}" & # guard: prevents eof closes on reader
+    #>"${fifo_log}" <"${FIFO_GUARD2}" & # guard: prevents eof closes on reader
 
     while read -r x ; do
 
         timeout 0.1 cat "${FIFO_X}" # interupt que
         ripmime --name-by-type --overwrite -d "${mlx_dir_ri}" -i "${mlx_fil_mi}"
-        mv "${mlx_fil_hlr}" "${mlx_fil_hlx}" > /dev/null 2>&1 &
+
+        if [ -e "${mlx_fil_hlr}" ]; then
+            mv "${mlx_fil_hlr}" "${mlx_fil_hlx}" > /dev/null 2>&1
+
+        elif [ -e "${mlx_fil_hlr1}" ]; then
+            mv "${mlx_fil_hlr1}" "${mlx_fil_hlx}" > /dev/null 2>&1
+
+        elif [ -e "${mlx_fil_txt1}" ]; then
+            #mv "${mlx_fil_txt1}" "${mlx_fil_hlx}" > /dev/null 2>&1 &
+            _txt2html
+
+        fi
+
         _brx > /dev/null 2>&1 &
+
+        rm -R ${mlx_dir_ri}/*
+        
         sleep 0.3
 
     done < "${FIFO_X}"
@@ -121,4 +140,8 @@ _main() {
 
 
 _main "${@}"
+
+
+#_bry()     { $browser_win "${mlx_fil_hlx}" & sleep 0.5s; }
+#_brx()     { $browser_win "${mlx_fil_hlr}" & sleep 0.5s; }
 
