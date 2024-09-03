@@ -7,7 +7,6 @@
 # init
 
 
-
 _ini() {
 
     declare -rg cmd=$1 && shift 1
@@ -36,16 +35,16 @@ _prn_uid() { printf "%s\n" "$UID"; }
 
 _remote_sync_ini1() {
 
-  declare -r cfg_notmuch="/home/$USER/.config/notmuch/notmuchrc"
-  declare -r cfg_mbsync="/home/$USER/.config/isync/mbsyncrc"; }
+  declare -rg cfg_notmuch="/home/$USER/.config/notmuch/notmuchrc"
+  declare -rg cfg_mbsync="/home/$USER/.config/isync/mbsyncrc"; }
 
 
 _remote_sync_run() { 
     
     STATE="$(nmcli networking connectivity)"
-    [ $STATE = 'full' ] || { echo "No internet connection."; exit 1; }
-    mbsync -c "$cfg_mbsync" --all
-    notmuch --config="$cfg_notmuch" new  ;} ##--quiet >> /dev/null
+    [ ${STATE} = 'full' ] || { echo "No internet connection."; exit 1; }
+    mbsync -c "${cfg_mbsync}" --all
+    notmuch --config="${cfg_notmuch}" new  ;} ##--quiet >> /dev/null
 
 
 _remote_sync() {
