@@ -19,6 +19,7 @@ _ini() {
     declare -rg mlx_fil_hlr="$mlx_dir_ri/text-html2"
     declare -rg mlx_fil_hlr1="$mlx_dir_ri/text-html1"
     declare -rg mlx_fil_txt1="$mlx_dir_ri/text-plain0"
+    declare -rg mlx_fil_txt2="$mlx_dir_ri/textfile0"
     declare -rg browser_win="qb m"
     declare -rg browser_winf="$BROWSER_WINF"
 
@@ -90,7 +91,7 @@ _listen() {
 
     while read -r x ; do
 
-        timeout 0.1 cat "${FIFO_X}" # interupt que
+        timeout 0.1 cat "${FIFO_X}" > /dev/null 2>&1 # interupt que
         ripmime --name-by-type --overwrite -d "${mlx_dir_ri}" -i "${mlx_fil_mi}"
 
         if [ -e "${mlx_fil_hlr}" ]; then
@@ -98,6 +99,9 @@ _listen() {
 
         elif [ -e "${mlx_fil_hlr1}" ]; then
             mv "${mlx_fil_hlr1}" "${mlx_fil_hlx}" > /dev/null 2>&1
+        
+        elif [ -e "${mlx_fil_txt2}" ]; then
+            mv "${mlx_fil_txt2}" "${mlx_fil_hlx}" > /dev/null 2>&1
 
         elif [ -e "${mlx_fil_txt1}" ]; then
             #mv "${mlx_fil_txt1}" "${mlx_fil_hlx}" > /dev/null 2>&1 &
@@ -128,12 +132,12 @@ _main() {
         # view
         qb.rip)     _listen ;;
         qb.rip.y)   _pip_brx  ${@} ;;
-    	browser)    _b ;;
-    	qb.float)   _b_float ;;
-    	term)       _term_b ;;
-    	term_view)  _term_view ;;# MD VIEWER VARIATIONS
+        browser)    _b ;;
+        qb.float)   _b_float ;;
+        term)       _term_b ;;
+        term_view)  _term_view ;;# MD VIEWER VARIATIONS
         # convert
-    	md2html)     ;; #?
+        md2html)     ;; #?
     esac
 }
 
