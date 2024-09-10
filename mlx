@@ -18,7 +18,9 @@ _ini() {
     declare -rg mlx_fil_hlx="$mlx_dir_ru/mlx.html"
     declare -rg mlx_fil_hlr="$mlx_dir_ri/text-html2"
     declare -rg mlx_fil_hlr1="$mlx_dir_ri/text-html1"
+    declare -rg mlx_fil_hlr0="$mlx_dir_ri/text-html0"
     declare -rg mlx_fil_txt1="$mlx_dir_ri/text-plain0"
+    declare -rg mlx_fil_txt3="$mlx_dir_ri/text-plain1"
     declare -rg mlx_fil_txt2="$mlx_dir_ri/textfile0"
     declare -rg browser_win="qb m"
     declare -rg browser_winf="$BROWSER_WINF"
@@ -27,7 +29,6 @@ _ini() {
     #browser_win="$BROWSER_WIN"
     #mlx_fil_hlr="$mlx_dir_ri/textfile2"
     #mlx_htmy="$mlx_dir_ri/mlx.html"
-
 
 _prn_uid() { printf "%s\n" "$UID"; }
 
@@ -71,7 +72,7 @@ _pip_brx() {
     _brx > /dev/null 2>&1 &
 }
 
-_txt2html() { pandoc --quiet -s -f markdown -t html5 -o ${mlx_fil_hlx} ${mlx_fil_txt1}; }
+_txt2html() { pandoc --quiet -s -f markdown -t html5 -o ${mlx_fil_hlx} ${1}; }
 
 _clean() { rm -f "$FIFO_X"; exit 0;}
 
@@ -96,22 +97,30 @@ _listen() {
 
         if [ -e "${mlx_fil_hlr}" ]; then
             mv "${mlx_fil_hlr}" "${mlx_fil_hlx}" > /dev/null 2>&1
+        
+        elif [ -e "${mlx_fil_hlr0}" ]; then
+            mv "${mlx_fil_hlr0}" "${mlx_fil_hlx}" > /dev/null 2>&1
 
         elif [ -e "${mlx_fil_hlr1}" ]; then
             mv "${mlx_fil_hlr1}" "${mlx_fil_hlx}" > /dev/null 2>&1
         
         elif [ -e "${mlx_fil_txt2}" ]; then
-            mv "${mlx_fil_txt2}" "${mlx_fil_hlx}" > /dev/null 2>&1
+            #mv "${mlx_fil_txt2}" "${mlx_fil_hlx}" > /dev/null 2>&1
+            _txt2html "${mlx_fil_txt2}"
+        
+        elif [ -e "${mlx_fil_txt3}" ]; then
+            #mv "${mlx_fil_txt3}" "${mlx_fil_hlx}" > /dev/null 2>&1
+            _txt2html "${mlx_fil_txt3}"
 
         elif [ -e "${mlx_fil_txt1}" ]; then
             #mv "${mlx_fil_txt1}" "${mlx_fil_hlx}" > /dev/null 2>&1 &
-            _txt2html
+            _txt2html "${mlx_fil_txt1}"
 
         fi
 
         _brx > /dev/null 2>&1 &
 
-        rm -R ${mlx_dir_ri}/*
+        rm -R ${mlx_dir_ri}/* > /dev/null 2>&1
         
         sleep 0.3
 
