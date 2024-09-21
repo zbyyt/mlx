@@ -38,7 +38,7 @@ _prn_uid() { printf "%s\n" "$UID"; }
 _remote_sync_ini1() {
 
   declare -rg cfg_notmuch="/home/$USER/.config/notmuch/notmuchrc"
-  declare -rg cfg_mbsync="/home/$USER/.config/isync/mbsyncrc"; }
+  declare -rg cfg_mbsync="/home/$USER/.config/isync/isyncrc"; }
 
 
 _remote_sync_run() { 
