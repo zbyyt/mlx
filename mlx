@@ -22,7 +22,7 @@ _ini() {
     declare -rg mlx_fil_txt1="$mlx_dir_ri/text-plain0"
     declare -rg mlx_fil_txt3="$mlx_dir_ri/text-plain1"
     declare -rg mlx_fil_txt2="$mlx_dir_ri/textfile0"
-    declare -rg browser_win="qb m"
+    declare -rg browser_cur="qb m"
     declare -rg browser_winf="$BROWSER_WINF"
 
     mkdir -p "${mlx_dir_ru}" "${mlx_dir_ri}" ;}
@@ -46,6 +46,7 @@ _remote_sync_run() {
     STATE="$(nmcli networking connectivity)"
     [ ${STATE} = 'full' ] || { echo "No internet connection."; exit 1; }
     mbsync -c "${cfg_mbsync}" --all
+    echo "Notmuch:"
     notmuch --config="${cfg_notmuch}" new  ;} ##--quiet >> /dev/null
 
 
@@ -59,7 +60,7 @@ _remote_sync() {
 
 _term_b()  { elinks "${mlx_fil_hlx}" & }
 _b_float() { $browser_winf "file://$mailf" ; }
-_brx()     { $browser_win "${mlx_fil_hlx}" & }
+_brx()     { $browser_cur "${mlx_fil_hlx}" & }
 
 
 # piping ###############################################
@@ -74,14 +75,17 @@ _pip_brx() {
 
 _txt2html() { pandoc --quiet -s -f markdown -t html5 -o ${mlx_fil_hlx} ${1}; }
 
-_clean() { rm -f "$FIFO_X"; exit 0;}
+_clean() { rm -f "$FIFO_X" "$FIFO_GUARD"; exit 0;}
 
 
 _listen() {
     
     trap _clean SIGINT SIGTERM
 
-    rm -f "${FIFO_X:="/tmp/mutt-fifo"}"
+    #rm -f "${FIFO_X:="/tmp/mutt-fifo"}"
+
+    [ -f "${FIFO_X:="/tmp/mutt-fifo"}" ] && exit 0
+
     mkfifo "${FIFO_X:="/tmp/mutt-fifo"}" >/dev/null 2>&1
     mkfifo "${FIFO_GUARD:="/tmp/mutt-fifo-guard"}" >/dev/null 2>&1
 
